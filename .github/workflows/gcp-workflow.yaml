@@ -1,34 +1,37 @@
 on:
   push:
-    branches: ["123424"]
+    branches: ["master"]
 
 env:
   IMAGE_NAME: reactjs-image-gcp
+
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
-    environment: DOCKER_REPOSITORY
+
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
-      - name: Use with SHA
+      - uses: actions/checkout@v3
+
+      - name: Set image tag
+        run: echo "TAG=${GITHUB_SHA::8}" >> $GITHUB_ENV
+
+      - name: Login to Docker Hub
         run: |
-          echo "TAG=${GITHUB_SHA::8}" >> $GITHUB_ENV
-      - name: Show the TAGS values
+          echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login docker.io \
+            -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+
+      - name: Build image
         run: |
-          echo "TAG value is : ${{ env.TAG }}"
-      - name: Login to Docker Registry
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/$IMAGE_NAME:$TAG .
+
+      - name: Push image
         run: |
-          echo "${{ secrets.PASSWORD }}" | docker login -u ${{ secrets.USERNAME }} --password-stdin
-      - name: Build Docker Image
-        run: docker build -t ${{ secrets.USERNAME }}/${{env.IMAGE_NAME }}:${{ env.TAG }} .
-      - name: Push the Docker image
-        run: |
-          docker push ${{ secrets.USERNAME }}/${{env.IMAGE_NAME }}:${{ env.TAG }}
-      - name: Logout from the Registry
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/$IMAGE_NAME:$TAG
+
+      - name: Logout
         if: always()
-        run: |
-          docker logout
+        run: docker logout
+
   # deploy-service:
   #   needs: build-and-push
   #   runs-on: ubuntu-latest
@@ -50,8 +53,8 @@ jobs:
   #           echo "Current location is $(pwd) "
 
   #           echo "remove the container "
-  #           docker stop my-app || true 
-  #           docker rm my-app || true 
+  #           docker stop my-app || true
+  #           docker rm my-app || true
 
   #           echo "Pulling the updating image "
   #           docker pull "69966/${{env.IMAGE_NAME }}:${{ env.TAG }}"
