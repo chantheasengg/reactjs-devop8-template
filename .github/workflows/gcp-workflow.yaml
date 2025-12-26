@@ -3,7 +3,7 @@ name: CI/CD React App to GCP VM
 on:
   push:
     branches:
-      - "123424"
+      - "master"
 
 concurrency:
   group: production-deploy
