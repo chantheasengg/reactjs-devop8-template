@@ -8,7 +8,6 @@ COPY src ./src
 COPY public ./public 
 RUN npm run build 
 
-
 # Stage:2 production 
 FROM nginx:alpine
 COPY nginx.conf /etc/nginx/conf.d/default.conf
